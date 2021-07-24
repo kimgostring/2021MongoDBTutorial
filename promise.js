@@ -12,15 +12,11 @@ const addSum = (a, b) => {
     }); 
 };
 
+// promise chaining - callback hell보다 깔끔 (점점 깊어지지 않음, 보다 명확)
 addSum(1, 2)
-    // 한 줄인 함수의 경우 return 필요 없음, 무조건 한 줄의 실행 결과 리턴하게 됨
-    // 인자 하나일 경우 () 제거해도 됨
-    .then(sum => console.log({ sum })) 
-    .catch(err => console.log({ err }))
-addSum('hello', 'hi')
-    .then(sum => console.log({ sum }))
-    .catch(err => console.log({ err }))
-
-// 장점
-// 1. 성공 처리와 에러 처리가 나뉘어져 있어 callback에 비해 실수 적음
-// 2. resolve()가 실행되었다면 .then()을, reject()가 실행되었다면 .catch()를 실행 (깔끔)
+    .then(sum1 => {
+        console.log({ sum1 });
+        return addSum(sum1, 15);
+    })
+    .then(sum2 => console.log({ sum2 }))
+    .catch(err => console.log({ err })); // 아래에서 한 번만 오류 처리 해주면 됨

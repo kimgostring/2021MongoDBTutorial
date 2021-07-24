@@ -8,10 +8,13 @@ const addSum = (a, b, callback) => { // 작업이 끝나면 callback 인자로 �
     }, 3000);
 }; 
 
-const callback = (err, sum) => {
-    if (err) return console.log({ err });
-    console.log({ sum });
-}
+addSum(1, 2, (err1, sum1) => {
+    if (err1) return console.log({ err1 });
+    console.log({ sum1 });
 
-addSum(1, 2, callback); // success
-addSum('hello', 'hi', callback) // error
+    // callback hell - 콜백이 계속 깊어지는 (nesting) 현상
+    addSum(sum1, 15, (err2, sum2) => {
+        if (err2) return console.log({ err2 });
+        console.log({ sum2 });
+    });
+}); 
