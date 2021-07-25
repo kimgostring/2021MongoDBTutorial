@@ -13,5 +13,5 @@ const UserSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 // MongoDB compass _MONGOSH에서의 db처럼 User 이용할 수 있음 (DB의 CRUD 작업 가능)
-const User = mongoose.model('user', UserScnema);
+const User = mongoose.model('user', UserSchema);
 module.exports = { User };

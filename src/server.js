@@ -5,7 +5,6 @@ const config = require('./config');
 const { User } = require('./models/User');
 
 const port = 3000;
-const users = [];
 
 const server = async () => {
     try {
@@ -18,22 +17,17 @@ const server = async () => {
         // body parser
         app.use(express.json());
 
-        // method : get, endpoint : /users, function(req, res) : 콜백, /users에 접근 시 실행되는 함수
-        // req : client -> server로 넘어온 request body, header, URL 등 정보
-        // res : servr -> client로 리턴된 모든 정보
-        app.get('/users', function(req, res) {  
-            // res.send 함수를 통해 client로 리턴할 정보 넘길 수 있음
-            res.send({ users: users });
+        app.get('/users', (req, res) => {  
+            // res.send({ users: users });
         });
 
-        app.post('/users', function(req, res) {
-            // JS 문법, 배열에 새 원소 추가할 때 사용 
-            users.push({ name: req.body.name, age: req.body.age });
-            // 중복 send 방지 위해 리턴해주는 것이 좋음 
-            res.send({ success: true });
+        app.post('/users', async (req, res) => {
+            const user = new User(req.body); // 유저 문서 인스턴스를 mongoose로 생성
+            await user.save(); // mongoose에서 제공하는 함수를 통해 해당 문서를 DB에 저장
+            res.send({ success: true, user });
         })
 
-        app.listen(port, function () {
+        app.listen(port, () => {
             console.log(`server listening on port ${port}`);
         });
     } catch (err) {
