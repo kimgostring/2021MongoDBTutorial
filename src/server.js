@@ -2,6 +2,7 @@ const express = require('express');
 const app = express();
 const mongoose = require('mongoose');
 const config = require('./config');
+const { User } = require('./models/User');
 
 const port = 3000;
 const users = [];
