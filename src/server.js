@@ -11,8 +11,9 @@ const server = async () => {
         // DB가 먼저 연결된 뒤 요청 받아야 함 (mongoose 연결 완료된 뒤 포트 수신 해야 함)
         await mongoose.connect(config.MONGO_URL, 
             // 설정 객체 (옵션), mongoose 연결 시마다 뜨는 DeprecationWarning 제거해줌
-            { useNewUrlParser: true, useUnifiedTopology: true, useCreateIndex: true });
+            { useNewUrlParser: true, useUnifiedTopology: true, useCreateIndex: true, useFindAndModify: false });
         console.log('MongoDB connected');
+        // mongoose.set('debug', true);
         
         // body parser
         app.use(express.json());
@@ -23,7 +24,7 @@ const server = async () => {
                 const users = await User.find();
                 res.status(200).send({ success: true, users });
             } catch(err) {
-                return res.status(500).send( { err: err.message });
+                return res.status(500).send({ err: err.message });
             }
         });
 
@@ -36,7 +37,7 @@ const server = async () => {
                 const user = await User.findOne({ _id: userId });
                 res.status(200).send({ success: true, user })
             } catch(err) {
-                return res.status(500).send( { err: err.message });
+                return res.status(500).send({ err: err.message });
             }
         });
 
@@ -51,7 +52,22 @@ const server = async () => {
                 const user = await User.findOneAndDelete({ _id: userId });
                 res.status(200).send({ success: true, user })
             } catch(err) {
-                return res.status(500).send( { err: err.message });
+                return res.status(500).send({ err: err.message });
+            }
+        });
+
+        // 특정 유저 정보 업데이트하는 API
+        app.patch('/users/:userId', async (req, res) => {
+            try {
+                const { userId } = req.params;
+                if (!mongoose.isValidObjectId(userId)) return res.status(400).send({ err: 'invalid user id.' });
+            
+                // 세 번째 인수인 객체를 통해 new: true를 넘겨주어야 수정된 후의 객체 리턴됨
+                // 기본값은 new: false, 수정 전 객체 리턴
+                const user = await User.findOneAndUpdate({ _id: userId }, req.body, { new: true });
+                res.status(200).send({ success: true, user });
+            } catch(err) {
+                return res.status(500).send({ err: err.message });
             }
         });
 
