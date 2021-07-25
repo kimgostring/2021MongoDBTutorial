@@ -11,7 +11,7 @@ const server = async () => {
         // DB가 먼저 연결된 뒤 요청 받아야 함 (mongoose 연결 완료된 뒤 포트 수신 해야 함)
         await mongoose.connect(config.MONGO_URL, 
             // 설정 객체 (옵션), mongoose 연결 시마다 뜨는 DeprecationWarning 제거해줌
-            { useNewUrlParser: true, useUnifiedTopology: true });
+            { useNewUrlParser: true, useUnifiedTopology: true, useCreateIndex: true });
         console.log('MongoDB connected');
         
         // body parser
@@ -22,6 +22,19 @@ const server = async () => {
             try {
                 const users = await User.find();
                 res.status(200).send({ success: true, users });
+            } catch(err) {
+                return res.status(500).send( { err: err.message });
+            }
+        });
+
+        // 특정 유저를 불러오는 API
+        app.get('/users/:userId', async (req, res) => {
+            try {
+                const { userId } = req.params;
+                if (!mongoose.isValidObjectId(userId)) return res.status(400).send({ err: 'invalid user id.' })
+
+                const user = await User.findOne({ _id: userId });
+                res.status(200).send({ success: true, user })
             } catch(err) {
                 return res.status(500).send( { err: err.message });
             }

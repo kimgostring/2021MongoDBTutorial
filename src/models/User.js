@@ -4,7 +4,8 @@ const { Schema, model } = require('mongoose');
 // User라는 데이터는 어떤 key/value를 가지는지, 필수인지 등의 정보 
 // DB 업데이트 전, 이 정보를 통해 mongoose가 형식에 맞는지 확인해 줌
 const UserSchema = new Schema({
-    username: { type: String, required: true },
+    // unique, 중복 불가능한 값 설정
+    username: { type: String, required: true, unique: true },
     name: {
         first: { type: String, required: true },
         last: { type: String }
