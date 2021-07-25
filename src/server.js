@@ -40,6 +40,21 @@ const server = async () => {
             }
         });
 
+        // 특정 유저를 삭제하는 API
+        app.delete('/users/:userId', async (req, res) => {
+            try {
+                const { userId } = req.params;
+                if (!mongoose.isValidObjectId(userId)) return res.status(400).send({ err: 'invalid user id.' })
+
+                // deleteOne() : 검색된 유저 불러오지 않고 바로 삭제, 유저 정보 필요 없는 경우 더 효율적
+                // findOneAndDelete() : 삭제한 문서 리턴, 일치하는 것이 없는 경우 null 리턴
+                const user = await User.findOneAndDelete({ _id: userId });
+                res.status(200).send({ success: true, user })
+            } catch(err) {
+                return res.status(500).send( { err: err.message });
+            }
+        });
+
         app.post('/users', async (req, res) => {
             try {
                 // 구조 분해 할당
