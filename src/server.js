@@ -17,8 +17,14 @@ const server = async () => {
         // body parser
         app.use(express.json());
 
-        app.get('/users', (req, res) => {  
-            // res.send({ users: users });
+        // 모든 유저를 배열로 불러오는 API
+        app.get('/users', async (req, res) => {  
+            try {
+                const users = await User.find();
+                res.status(200).send({ success: true, users });
+            } catch(err) {
+                return res.status(500).send( { err: err.message });
+            }
         });
 
         app.post('/users', async (req, res) => {
@@ -34,7 +40,7 @@ const server = async () => {
 
                 const user = new User(req.body); // 유저 문서 인스턴스를 mongoose로 생성
                 await user.save(); // mongoose에서 제공하는 함수를 통해 해당 문서를 DB에 저장
-                res.send({ success: true, user });  
+                res.status(200).send({ success: true, user });  
             } catch(err) {
                 return res.status(500).send({ err : err.message }); // server error
                 // err.message, 오류 발생 스택 부분은 빼고 오류 메세지만 보낼 수 있음
