@@ -61,10 +61,26 @@ const server = async () => {
             try {
                 const { userId } = req.params;
                 if (!mongoose.isValidObjectId(userId)) return res.status(400).send({ err: 'invalid user id.' });
-            
+                
+                // 유저 정보의 age, name만 수정 가능하도록
+                const { age, name } = req.body;
+
+                if (!age && !name) return res.status(400).send({ err: 'age or name is required.' });
+                if (name && !name.first) return res.status(400).send({ err: 'first name is required.' });
+
+                if (name && (typeof name.first !== 'string' || (name.last && typeof name.last !== 'string'))) 
+                    return res.status(400).send({ err: 'first name and last name are string.' });
+                if (age && typeof age !== 'number') return res.status(400).send({ err: 'age must be a number.' });
+
+                // null인 값은 유저 정보 수정에 이용하지 않음, 수정할 내용에서 제외시키기
+                // 이 부분이 없으면, 수정하지 않으려는 값이 null로 변함
+                const updateBody = {};
+                if (age) updateBody.age = age;
+                if (name) updateBody.name = name;
+
                 // 세 번째 인수인 객체를 통해 new: true를 넘겨주어야 수정된 후의 객체 리턴됨
                 // 기본값은 new: false, 수정 전 객체 리턴
-                const user = await User.findOneAndUpdate({ _id: userId }, req.body, { new: true });
+                const user = await User.findOneAndUpdate({ _id: userId }, updateBody, { new: true });
                 res.status(200).send({ success: true, user });
             } catch(err) {
                 return res.status(500).send({ err: err.message });
