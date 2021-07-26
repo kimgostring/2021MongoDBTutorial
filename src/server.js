@@ -3,7 +3,7 @@ const app = express();
 const mongoose = require("mongoose");
 const config = require("./config");
 const { userRouter } = require("./routes/userRoute");
-
+const { blogRouter } = require("./routes/blogRoute");
 const port = 3000;
 
 const server = async () => {
@@ -26,6 +26,7 @@ const server = async () => {
 
     // 라우터
     app.use("/users", userRouter);
+    app.use("/blogs", blogRouter);
 
     app.listen(port, () => {
       console.log(`server listening on port ${port}`);
