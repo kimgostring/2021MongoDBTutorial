@@ -13,8 +13,10 @@ blogRouter.post("/", async (req, res) => {
       return res.status(400).send({ err: "title is required." });
     if (typeof content !== "string")
       return res.status(400).send({ err: "content is required." });
+    // islive는 무조건 존재하지 않아도 됨 (default 옵션 존재하므로)
+    // islive가 있을 때 boolean이 아니면 문제 발생
     if (islive && typeof islive !== "boolean")
-      return res.status(400).send({ err: "islive is required. " });
+      return res.status(400).send({ err: "islive must be a boolean." });
     if (!isValidObjectId(userId))
       return res.status(400).send({ err: "user id is invalid." });
 
@@ -28,21 +30,32 @@ blogRouter.post("/", async (req, res) => {
     // - 클라이언트에서 user 객체의 값 가져올 수 있음, 추가적인 작업 할 때 유용
     // mongoose에서 save할 때, user 객체를 보고 적절하게 변환하여 (_id를 빼와) 저장
     await blog.save();
-    res.send(blog);
+    res.send({ success: true, blog });
   } catch (err) {
     res.status(500).send({ err: err.message });
   }
 });
 
+// 전체 블로그 불러오는 API
 blogRouter.get("/", async (req, res) => {
   try {
+    const blogs = await Blog.find();
+    res.send({ success: true, blogs });
   } catch (err) {
     res.status(500).send({ err: err.message });
   }
 });
 
+// 하나의 블로그 불러오는 API
 blogRouter.get("/:blogId", async (req, res) => {
   try {
+    const { blogId } = req.params;
+    if (!isValidObjectId(blogId))
+      return res.status(400).send({ err: "blog id is invalid." });
+
+    const blog = await Blog.findOne({ _id: blogId });
+    if (!blog) return res.status(400).send({ err: "blog is not exist." });
+    res.send({ success: true, blog });
   } catch (err) {
     res.status(500).send({ err: err.message });
   }
@@ -51,14 +64,47 @@ blogRouter.get("/:blogId", async (req, res) => {
 // put, 전체 수정
 blogRouter.put("/:blogId", async (req, res) => {
   try {
+    const { blogId } = req.params;
+    if (!isValidObjectId(blogId))
+      return res.status(400).send({ err: "blog id is invalid." });
+
+    const { title, content } = req.body;
+
+    if (typeof title !== "string")
+      return res.status(400).send({ err: "title is required." });
+    if (typeof content !== "string")
+      return res.status(400).send({ err: "content is required." });
+
+    const blog = await Blog.findOneAndUpdate(
+      { _id: blogId },
+      { title, content },
+      { new: true }
+    );
+
+    res.send({ success: true, blog });
   } catch (err) {
     res.status(500).send({ err: err.message });
   }
 });
 
-// patch, 부분적 수정
-blogRouter.patch("/:blogId/live", async (req, res) => {
+// patch, 부분적 수정 (islive)
+blogRouter.patch("/:blogId/islive", async (req, res) => {
   try {
+    const { blogId } = req.params;
+    if (!isValidObjectId(blogId))
+      return res.status(400).send({ err: "blog id is invalid." });
+
+    const { islive } = req.body;
+    // islive를 수정하는 API이므로, 필수인 값
+    if (typeof islive !== "boolean")
+      return res.status(400).send({ err: "boolean islive is required." });
+
+    const blog = await Blog.findByIdAndUpdate(
+      blogId,
+      { islive },
+      { new: true }
+    );
+    res.send({ success: true, blog });
   } catch (err) {
     res.status(500).send({ err: err.message });
   }
