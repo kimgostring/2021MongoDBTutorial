@@ -4,6 +4,8 @@ const mongoose = require("mongoose");
 const config = require("./config");
 // 경로에 폴더명만 존재할 경우, 해당 폴더의 index.js 찾아 불러오게 됨
 const { userRouter, blogRouter } = require("./routes");
+// 테스트용 데이터 생성
+const { generateFakeData } = require("../faker");
 const port = 3000;
 
 const server = async () => {
@@ -21,6 +23,9 @@ const server = async () => {
     );
     console.log("MongoDB connected");
     // mongoose.set("debug", true); // mongoose debug mode
+
+    // 유저 100명, 블로그 1000개, 후기 30000개
+    // await generateFakeData(100, 10, 300);
 
     app.use(express.json());
 
