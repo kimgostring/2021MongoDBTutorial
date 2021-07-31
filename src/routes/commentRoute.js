@@ -24,14 +24,19 @@ commentRouter.post("/", async (req, res) => {
     if (typeof content !== "string")
       return res.status(400).send({ err: "content is required." });
 
-    const blog = await Blog.findById(blogId);
-    const user = await User.findById(userId);
+    // blog, user 호출을 동시에 하면 시간 줄일 수 있음
+    const [blog, user] = await Promise.all([
+      Blog.findById(blogId),
+      User.findById(userId),
+    ]);
+
     if (!blog || !user)
       return res.status(400).send({ err: "blog or user does not exist." });
     if (!blog.islive)
       return res.status(400).send({ err: "blog is not available." });
 
     const comment = new Comment({ content, user, blog });
+    await comment.save();
     res.send({ success: true, comment });
   } catch (err) {
     return res.status(500).send({ err: err.message });
