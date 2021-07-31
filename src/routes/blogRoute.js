@@ -42,7 +42,7 @@ blogRouter.post("/", async (req, res) => {
 // 전체 블로그 불러오는 API
 blogRouter.get("/", async (req, res) => {
   try {
-    const blogs = await Blog.find();
+    const blogs = await Blog.find().limit(10); // 최대 10개만 불러오도록 함
     res.send({ success: true, blogs });
   } catch (err) {
     res.status(500).send({ err: err.message });
