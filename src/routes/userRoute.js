@@ -1,6 +1,6 @@
 // 유저 관련 API
 const { Router } = require("express");
-const { User } = require("../models/User");
+const { User } = require("../models");
 const mongoose = require("mongoose"); // isValidObjectedId
 
 const userRouter = Router();

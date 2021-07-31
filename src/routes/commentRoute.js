@@ -1,7 +1,5 @@
 const { Router } = require("express");
-const { Comment } = require("../models/Comment");
-const { Blog } = require("../models/Blog");
-const { User } = require("../models/User");
+const { Comment, Blog, User } = require("../models");
 const { isValidObjectId } = require("mongoose");
 
 // blogRoute.js에서 설정한 엔드포인트 /:blogId의 값 불러올 수 있게 해주는 설정

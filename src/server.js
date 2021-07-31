@@ -2,8 +2,8 @@ const express = require("express");
 const app = express();
 const mongoose = require("mongoose");
 const config = require("./config");
-const { userRouter } = require("./routes/userRoute");
-const { blogRouter } = require("./routes/blogRoute");
+// 경로에 폴더명만 존재할 경우, 해당 폴더의 index.js 찾아 불러오게 됨
+const { userRouter, blogRouter } = require("./routes");
 const port = 3000;
 
 const server = async () => {
