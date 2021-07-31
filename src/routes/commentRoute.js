@@ -44,6 +44,19 @@ commentRouter.post("/", async (req, res) => {
 });
 
 // 댓글 조회 API
-commentRouter.get("/");
+commentRouter.get("/", async (req, res) => {
+  try {
+    const { blogId } = req.params;
+    if (!isValidObjectId(blogId))
+      return res.status(400).send({ err: "blog id is invalid." });
+
+    // 블로그 id 존재 여부 필요하지 않은 이유, 해당하는 댓글 없으므로 어차피 빈 배열 리턴됨
+    // 생성/수정이 아닌 경우에는 확인을 최소화하는 것이 좋음
+    const comments = await Comment.find({ blog: blogId });
+    res.send({ success: true, comments });
+  } catch (err) {
+    return res.status(500).send({ err: err.message });
+  }
+});
 
 module.exports = { commentRouter };
