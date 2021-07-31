@@ -3,7 +3,11 @@ const { Blog } = require("../models/Blog");
 const { User } = require("../models/User");
 const { isValidObjectId } = require("mongoose");
 
+const { commentRouter } = require("./commentRoute");
+
 const blogRouter = Router();
+
+blogRouter.use("/:blogId/comments", commentRouter);
 
 // 블로그 생성 API
 blogRouter.post("/", async (req, res) => {
