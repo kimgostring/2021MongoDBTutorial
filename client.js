@@ -2,6 +2,14 @@ console.log("client code running.");
 const axios = require("axios");
 const URI = "http://localhost:3000";
 
+// 비효율적인 방법 :
+//   - blogsLimit 10 : 3.5초
+//   - blogsLimit 20 : 6.7초
+// populate :
+//   - 10 : 0.5초
+//   - 20 : 1초
+//   - 200 : 3초
+
 const test = async () => {
   // 성능 체크
   console.time("loading time");
@@ -27,4 +35,4 @@ const testGroup = async () => {
   await test();
 };
 
-test();
+testGroup();
