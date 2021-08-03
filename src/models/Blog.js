@@ -13,5 +13,15 @@ const BlogSchema = new Schema(
   { timestamps: true }
 );
 
+// 가상 필드 추가
+BlogSchema.virtual("comments", {
+  ref: "comment",
+  localField: "_id",
+  foreignField: "blog",
+});
+
+BlogSchema.set("toObject", { virtuals: true });
+BlogSchema.set("toJSON", { virtuals: true });
+
 const Blog = model("blog", BlogSchema);
 module.exports = { Blog };

@@ -35,17 +35,22 @@ blogRouter.post("/", async (req, res) => {
     await blog.save();
     res.send({ success: true, blog });
   } catch (err) {
-    res.status(500).send({ err: err.message });
+    return res.status(500).send({ err: err.message });
   }
 });
 
 // 전체 블로그 불러오는 API
 blogRouter.get("/", async (req, res) => {
   try {
-    const blogs = await Blog.find().limit(10); // 최대 10개만 불러오도록 함
+    const blogs = await Blog.find()
+      .limit(10)
+      .populate([
+        { path: "user" },
+        { path: "comments", populate: { path: "user" } },
+      ]); // 최대 10개만 불러오도록 함
     res.send({ success: true, blogs });
   } catch (err) {
-    res.status(500).send({ err: err.message });
+    return res.status(500).send({ err: err.message });
   }
 });
 
@@ -60,7 +65,7 @@ blogRouter.get("/:blogId", async (req, res) => {
     if (!blog) return res.status(400).send({ err: "blog is not exist." });
     res.send({ success: true, blog });
   } catch (err) {
-    res.status(500).send({ err: err.message });
+    return res.status(500).send({ err: err.message });
   }
 });
 
@@ -86,7 +91,7 @@ blogRouter.put("/:blogId", async (req, res) => {
 
     res.send({ success: true, blog });
   } catch (err) {
-    res.status(500).send({ err: err.message });
+    return res.status(500).send({ err: err.message });
   }
 });
 
@@ -109,7 +114,7 @@ blogRouter.patch("/:blogId/islive", async (req, res) => {
     );
     res.send({ success: true, blog });
   } catch (err) {
-    res.status(500).send({ err: err.message });
+    return res.status(500).send({ err: err.message });
   }
 });
 
