@@ -33,7 +33,12 @@ commentRouter.post("/", async (req, res) => {
     if (!blog.islive)
       return res.status(400).send({ err: "blog is not available." });
 
-    const comment = new Comment({ content, user, blog });
+    const comment = new Comment({
+      content,
+      user,
+      userFullName: `${user.name.first} ${user.name.last}`,
+      blog,
+    });
 
     // blog에 comment 내장하도록 스키마 구조 수정됨, 댓글 생성 시 blog도 바꿔줘야 함
     await Promise.all([
