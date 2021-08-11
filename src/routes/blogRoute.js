@@ -28,10 +28,7 @@ blogRouter.post("/", async (req, res) => {
     if (!user) return res.status(400).send({ err: "user is not exist." });
 
     const blog = new Blog({ ...req.body, user });
-    // 스키마에 없는 필드가 객체 프로퍼티로 있을 경우 무시됨
-    // 백엔드에 저장된 Blog 객체에는 user 객체 그대로 들어가 있음
-    // - 클라이언트에서 user 객체의 값 가져올 수 있음, 추가적인 작업 할 때 유용
-    // mongoose에서 save할 때, user 객체를 보고 적절하게 변환하여 (_id를 빼와) 저장
+    // mongoose에서 save할 때, user 객체를 보고 적절하게 변환하여 (_id, username, name 빼와) 저장
     await blog.save();
     res.send({ success: true, blog });
   } catch (err) {
