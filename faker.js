@@ -53,7 +53,7 @@ generateFakeData = async (userCount, blogsPerUser, commentsPerUser) => {
         new Comment({
           content: faker.lorem.sentence(),
           user,
-          blog: blogs[index]._id,
+          blog: blogs[index]._id, // _id는 객체 생성 시 자동으로 생성되어 추가됨
         })
       );
     }
