@@ -57,9 +57,9 @@ generateFakeData = async (userCount, blogsPerUser, commentsPerUser) => {
         comments.push(
           // new Comment 대신, API 호출을 통해 블로그 생성
           axios.post(
-            // 여기서 얻어온 값은 res.data.blogs에 존재
+            // 여기서 얻어온 값은 res.data.blog에 존재 - 블로그 하나 생성하는 API였으므로 blogs가 아닌 blog
             // 한 user는 commentsPerUser만큼 댓글 작성, 블로그는 랜덤으로 결정
-            `${URI}/blogs/${newBlogs[index].data.blogs._id}/comments`,
+            `${URI}/blogs/${newBlogs[index].data.blog._id}/comments`,
             {
               content: faker.lorem.sentence(),
               userId: user.id,

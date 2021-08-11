@@ -5,7 +5,7 @@ const config = require("./config");
 // 경로에 폴더명만 존재할 경우, 해당 폴더의 index.js 찾아 불러오게 됨
 const { userRouter, blogRouter } = require("./routes");
 // 테스트용 데이터 생성
-const { generateFakeData } = require("../faker");
+const { generateFakeData } = require("../faker2");
 const port = 3000;
 
 const server = async () => {
@@ -24,17 +24,23 @@ const server = async () => {
     console.log("MongoDB connected");
     // mongoose.set("debug", true); // mongoose debug mode
 
-    // 유저 100명, 블로그 1000개, 후기 30000개
-    // await generateFakeData(100, 10, 300);
-
     app.use(express.json());
 
     // 라우터
     app.use("/users", userRouter);
     app.use("/blogs", blogRouter);
 
-    app.listen(port, () => {
+    app.listen(port, async () => {
       console.log(`server listening on port ${port}`);
+      // server의 API 사용하므로, 서버가 다 켜진 뒤 함수 실행해야 함
+
+      // 유저 100명, 블로그 1000개, 후기 30000개 - 엄청 많은 호출을 병렬로 한 번에 하게 되면 오류 생김
+      // for문을 통해 20번을 순차적으로 하면 과부화되지 않을 것
+      // Error: connect ECONNREFUSED 127.0.0.1:3000
+      // at TCPConnectWrap.afterConnect [as oncomplete] (net.js:1146:16)
+      // for (let i = 0; i < 20; i++) {
+      //   await generateFakeData(10, 1, 10);
+      // }
     });
   } catch (err) {
     console.log(err);
