@@ -1,6 +1,6 @@
 // 유저 관련 API
 const { Router } = require("express");
-const { User } = require("../models");
+const { User, Blog } = require("../models");
 const mongoose = require("mongoose"); // isValidObjectedId
 
 const userRouter = Router();
@@ -46,7 +46,7 @@ userRouter.delete("/:userId", async (req, res) => {
 });
 
 // 특정 유저 정보 업데이트하는 API
-userRouter.patch("/:userId", async (req, res) => {
+userRouter.put("/:userId", async (req, res) => {
   try {
     const { userId } = req.params;
     if (!mongoose.isValidObjectId(userId))
@@ -79,7 +79,13 @@ userRouter.patch("/:userId", async (req, res) => {
     // 주석과 동일한 코드
     const user = await User.findOne({ _id: userId });
     if (age) user.age = age;
-    if (name) user.name = name;
+
+    // blog와 comment에 내장된 user도 바꿔주어야 함
+    if (name) {
+      user.name = name;
+      // 한 유저가 여러 블로그 작성 가능, 같은 유저의 여러 블로그 수정해야 함
+      await Blog.updateMany({ "user._id": userId }, { "user.name": name });
+    }
     await user.save();
 
     res.status(200).send({ success: true, user });
