@@ -38,7 +38,16 @@ userRouter.delete("/:userId", async (req, res) => {
 
     // deleteOne() : 검색된 유저 불러오지 않고 바로 삭제, 유저 정보 필요 없는 경우 더 효율적
     // findOneAndDelete() : 삭제한 문서 리턴, 일치하는 것이 없는 경우 null 리턴
-    const user = await User.findOneAndDelete({ _id: userId });
+    const [user] = await Promise.all([
+      User.findOneAndDelete({ _id: userId }),
+      Blog.deleteMany({ "user._id": userId }),
+      Blog.updateMany(
+        { "comments.user": userId },
+        { $pull: { comments: { user: userId } } }
+      ),
+      Comment.deleteMany({ user: userId }),
+    ]);
+
     res.status(200).send({ success: true, user });
   } catch (err) {
     return res.status(500).send({ err: err.message });
@@ -88,7 +97,7 @@ userRouter.put("/:userId", async (req, res) => {
         Blog.updateMany({ "user._id": userId }, { "user.name": name }),
         // 배열 필드에서 조건 맞는 여러 원소 찾아 수정할 때, arrayfilters 이용
         Blog.updateMany(
-          { "comments.user._id": userId },
+          { "comments.user": userId },
           { "comments.$[element].userFullName": `${name.first} ${name.last}` },
           { arrayFilters: [{ "element.user": userId }] }
         ),
