@@ -68,4 +68,24 @@ commentRouter.get("/", async (req, res) => {
   }
 });
 
+// 후기의 content만 수정하는 API
+commentRouter.patch("/:commentId", async (req, res) => {
+  const { commentId } = req.params;
+  const { content } = req.body;
+  if (typeof content !== "string")
+    return res.status(400).send({ err: "content is required." });
+
+  // 디스트럭처링, 이 경우 Promise.all 배열의 첫 번째 요소만 변수 comment에 받아오게 됨
+  const [comment] = await Promise.all([
+    Comment.findOneAndUpdate({ _id: commentId }, { content }, { new: true }),
+    // 블로그에 내장된 후기 수정
+    Blog.updateOne(
+      { "comments._id": commentId },
+      { "comments.$.content": content }
+    ),
+  ]);
+
+  return res.send({ success: true, comment });
+});
+
 module.exports = { commentRouter };
