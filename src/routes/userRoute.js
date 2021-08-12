@@ -1,6 +1,6 @@
 // 유저 관련 API
 const { Router } = require("express");
-const { User, Blog } = require("../models");
+const { User, Blog, Comment } = require("../models");
 const mongoose = require("mongoose"); // isValidObjectedId
 
 const userRouter = Router();
@@ -80,11 +80,23 @@ userRouter.put("/:userId", async (req, res) => {
     const user = await User.findOne({ _id: userId });
     if (age) user.age = age;
 
-    // blog와 comment에 내장된 user도 바꿔주어야 함
+    // blog와 comment에 내장된 name도 바꿔주어야 함
     if (name) {
       user.name = name;
-      // 한 유저가 여러 블로그 작성 가능, 같은 유저의 여러 블로그 수정해야 함
-      await Blog.updateMany({ "user._id": userId }, { "user.name": name });
+      await Promise.all([
+        // 한 유저가 여러 블로그 작성 가능, 같은 유저의 여러 블로그 수정해야 함
+        Blog.updateMany({ "user._id": userId }, { "user.name": name }),
+        // 배열 필드에서 조건 맞는 여러 원소 찾아 수정할 때, arrayfilters 이용
+        Blog.updateMany(
+          { "comments.user._id": userId },
+          { "comments.$[element].userFullName": `${name.first} ${name.last}` },
+          { arrayFilters: [{ "element.user": userId }] }
+        ),
+        Comment.updateMany(
+          { user: userId },
+          { userFullName: `${name.first} ${name.last}` }
+        ),
+      ]);
     }
     await user.save();
 
