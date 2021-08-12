@@ -88,4 +88,17 @@ commentRouter.patch("/:commentId", async (req, res) => {
   return res.send({ success: true, comment });
 });
 
+// 삭제 API
+commentRouter.delete("/:commentId", async (req, res) => {
+  const { commentId } = req.params;
+
+  const comment = await Comment.findOneAndDelete({ _id: commentId });
+  await Blog.updateOne(
+    { "comments._id": commentId },
+    { $pull: { comments: { _id: commentId } } }
+  );
+
+  res.send({ success: true, comment });
+});
+
 module.exports = { commentRouter };
