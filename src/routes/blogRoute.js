@@ -39,12 +39,18 @@ blogRouter.post("/", async (req, res) => {
 // 전체 블로그 불러오는 API
 blogRouter.get("/", async (req, res) => {
   try {
+    const limit = 3;
+    let { page } = req.query; // 디스트럭처링
+    page = parseInt(page); // string -> num
+
     const blogs = await Blog.find()
-      .limit(10)
+      .sort({ updatedAt: -1 }) // 가장 나중에 업데이트된 순서로, 내림차순
+      .skip((page - 1) * limit) // 처음 페이지는 1부터
+      .limit(limit) // limit개 문서 불러옴
       .populate([
         { path: "user" },
         { path: "comments", populate: { path: "user" } },
-      ]); // 최대 10개만 불러오도록 함
+      ]);
     res.send({ success: true, blogs });
   } catch (err) {
     return res.status(500).send({ err: err.message });
