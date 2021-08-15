@@ -45,7 +45,11 @@ commentRouter.post("/", async (req, res) => {
     //   comment.save(),
     //   Blog.updateOne({ _id: blogId }, { $push: { comments: comment } }),
     // ]);
-    await comment.save();
+    await Promise.all([
+      comment.save(),
+      // 자식문서 대신 가공된 값 내장, 자식문서의 개수 늘어난다고 해서 부담 생기지 않음
+      Blog.updateOne({ _id: blogId }, { $inc: { commentsCount: 1 } }),
+    ]);
 
     res.send({ success: true, comment });
   } catch (err) {
@@ -98,13 +102,14 @@ commentRouter.patch("/:commentId", async (req, res) => {
 
 // 삭제 API
 commentRouter.delete("/:commentId", async (req, res) => {
-  const { commentId } = req.params;
+  const { blogId, commentId } = req.params;
 
   const [comment] = await Promise.all([
     Comment.findOneAndDelete({ _id: commentId }),
     Blog.updateOne(
-      { "comments._id": commentId },
-      { $pull: { comments: { _id: commentId } } }
+      { _id: blogId },
+      // commentsCount 삭제 부분 추가, 내장한 문서 없으므로 pull도 필요 없음
+      { $inc: { commentsCount: -1 } }
     ),
   ]);
 

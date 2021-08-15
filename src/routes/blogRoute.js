@@ -1,5 +1,5 @@
 const { Router } = require("express");
-const { Blog, User } = require("../models");
+const { Blog, User, Comment } = require("../models");
 const { isValidObjectId } = require("mongoose");
 
 const { commentRouter } = require("./commentRoute");
@@ -65,6 +65,9 @@ blogRouter.get("/:blogId", async (req, res) => {
       return res.status(400).send({ err: "blog id is invalid." });
 
     const blog = await Blog.findOne({ _id: blogId });
+    // 호출을 통해 직접 불러오는 방법
+    // const commentsCount = await Comment.find({ blog: blogId }).countDocuments();
+
     if (!blog) return res.status(400).send({ err: "blog is not exist." });
     res.send({ success: true, blog });
   } catch (err) {
