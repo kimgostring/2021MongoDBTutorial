@@ -38,7 +38,9 @@ const server = async () => {
       // for문을 통해 20번을 순차적으로 하면 과부화되지 않을 것
       // Error: connect ECONNREFUSED 127.0.0.1:3000
       // at TCPConnectWrap.afterConnect [as oncomplete] (net.js:1146:16)
-      // await generateFakeData(10, 2, 5);
+      // console.time("insert time");
+      // await generateFakeData(10, 10, 10);
+      // console.timeEnd("insert time");
     });
   } catch (err) {
     console.log(err);

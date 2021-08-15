@@ -26,6 +26,9 @@ const BlogSchema = new Schema(
   { timestamps: true }
 );
 
+// timestamps
+BlogSchema.index({ "user.id": 1, updatedAt: -1 });
+
 // 가상 필드 추가
 // BlogSchema.virtual("comments", {
 //   ref: "comment",
