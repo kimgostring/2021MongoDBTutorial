@@ -41,10 +41,11 @@ commentRouter.post("/", async (req, res) => {
     });
 
     // blog에 comment 내장하도록 스키마 구조 수정됨, 댓글 생성 시 blog도 바꿔줘야 함
-    await Promise.all([
-      comment.save(),
-      Blog.updateOne({ _id: blogId }, { $push: { comments: comment } }),
-    ]);
+    // await Promise.all([
+    //   comment.save(),
+    //   Blog.updateOne({ _id: blogId }, { $push: { comments: comment } }),
+    // ]);
+    await comment.save();
 
     res.send({ success: true, comment });
   } catch (err) {
@@ -55,13 +56,20 @@ commentRouter.post("/", async (req, res) => {
 // 댓글 조회 API
 commentRouter.get("/", async (req, res) => {
   try {
+    const limit = 3;
+    let { page = 0 } = req.query; // 디스트럭처링, 기본값 0
+    page = parseInt(page);
+
     const { blogId } = req.params;
     if (!isValidObjectId(blogId))
       return res.status(400).send({ err: "blog id is invalid." });
 
     // 블로그 id 존재 여부 필요하지 않은 이유, 해당하는 댓글 없으므로 어차피 빈 배열 리턴됨
     // 생성/수정이 아닌 경우에는 확인을 최소화하는 것이 좋음
-    const comments = await Comment.find({ blog: blogId });
+    const comments = await Comment.find({ blog: blogId })
+      .sort({ createdAt: -1 })
+      .skip(page * limit)
+      .limit(limit);
     res.send({ success: true, comments });
   } catch (err) {
     return res.status(500).send({ err: err.message });

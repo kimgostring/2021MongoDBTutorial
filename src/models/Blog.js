@@ -20,7 +20,7 @@ const BlogSchema = new Schema(
     },
     // 기존 스키마를 그대로 내장해서 받는 경우, 그냥 스키마 불러와서 넣어주면 됨
     // 이렇게도 만들 수 있음
-    comments: [CommentSchema], // 배열 데이터이므로 배열 안에 감쌈
+    // comments: [CommentSchema], // 배열 데이터이므로 배열 안에 감쌈
     // 직접 내장했으므로 가상 필드 삭제
   },
   { timestamps: true }

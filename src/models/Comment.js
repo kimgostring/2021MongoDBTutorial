@@ -15,5 +15,8 @@ const CommentSchema = new Schema(
   { timestamps: true }
 );
 
+// 먼저 같은 blog의 후기끼리 검색해 모으고, 각 후기를 최신순으로 불러오게 됨
+CommentSchema.index({ blog: 1, createdAt: -1 });
+
 const Comment = model("comment", CommentSchema);
 module.exports = { Comment, CommentSchema };

@@ -39,7 +39,7 @@ const server = async () => {
       // Error: connect ECONNREFUSED 127.0.0.1:3000
       // at TCPConnectWrap.afterConnect [as oncomplete] (net.js:1146:16)
       // console.time("insert time");
-      // await generateFakeData(10, 10, 10);
+      // await generateFakeData(10, 2, 10);
       // console.timeEnd("insert time");
     });
   } catch (err) {
