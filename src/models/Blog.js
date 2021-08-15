@@ -28,6 +28,8 @@ const BlogSchema = new Schema(
 
 // timestamps
 BlogSchema.index({ "user.id": 1, updatedAt: -1 });
+// text index 생성
+BlogSchema.index({ title: "text", content: "text" });
 
 // 가상 필드 추가
 // BlogSchema.virtual("comments", {
