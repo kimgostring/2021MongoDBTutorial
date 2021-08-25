@@ -13,9 +13,6 @@ const commentRouter = Router({ mergeParams: true });
 
 // 댓글 등록 API
 commentRouter.post("/", async (req, res) => {
-  const session = await startSession();
-  let comment;
-
   try {
     const { blogId } = req.params;
     if (!isValidObjectId(blogId))
@@ -27,44 +24,47 @@ commentRouter.post("/", async (req, res) => {
     if (typeof content !== "string")
       return res.status(400).send({ err: "content is required." });
 
-    await session.withTransaction(async () => {
-      // 트랜색션
-      const [blog, user] = await Promise.all([
-        Blog.findById(blogId, {}, { session }), // 세 번째 옵션에 넣어주어야 함
-        User.findById(userId, {}, { session }),
-      ]);
+    const [blog, user] = await Promise.all([
+      Blog.findById(blogId),
+      User.findById(userId),
+    ]);
 
-      if (!blog || !user)
-        return res.status(400).send({ err: "blog or user does not exist." });
-      if (!blog.islive)
-        return res.status(400).send({ err: "blog is not available." });
+    if (!blog || !user)
+      return res.status(400).send({ err: "blog or user does not exist." });
+    if (!blog.islive)
+      return res.status(400).send({ err: "blog is not available." });
 
-      comment = new Comment({
-        content,
-        user,
-        userFullName: `${user.name.first}${
-          user.name.last ? ` ${user.name.last}` : ""
-        }`,
-        blog: blogId,
-      });
-
-      blog.commentsCount++;
-      blog.comments.unshift(comment);
-      if (blog.commentsCount > commentsLimit) blog.comments.pop();
-
-      await Promise.all([
-        comment.save({ session }),
-        blog.save(), // session을 이용해서 불러온 문서에는 이미 session 내장되어 있음
-      ]);
+    const comment = new Comment({
+      content,
+      user,
+      userFullName: `${user.name.first}${
+        user.name.last ? ` ${user.name.last}` : ""
+      }`,
+      blog: blogId,
     });
 
-    // await로 트랜색션 기다린 뒤 client로 결과 보내기
+    // DB operation으로 처리하는 방법
+    await Promise.all([
+      comment.save(),
+      Blog.updateOne(
+        { _id: blogId },
+        {
+          $inc: { commentsCount: 1 },
+          $push: { comments: { $each: [comment], $position: 0, $slice: 3 } },
+        }
+      ),
+    ]);
+
+    // node.js 서버에서 처리하는 방법
+    // blog.commentsCount++;
+    // blog.comments.unshift(comment);
+    // if (blog.commentsCount > commentsLimit) blog.comments.pop();
+
+    // await Promise.all([comment.save(), blog.save()]);
+
     res.send({ success: true, comment });
   } catch (err) {
-    console.log(err.message);
     return res.status(500).send({ err: err.message });
-  } finally {
-    await session.endSession();
   }
 });
 
@@ -112,35 +112,50 @@ commentRouter.patch("/:commentId", async (req, res) => {
 
 // 삭제 API
 commentRouter.delete("/:commentId", async (req, res) => {
+  const session = await startSession();
+  let deletedComment, blog;
+
   try {
-    const { blogId, commentId } = req.params;
+    await session.withTransaction(async () => {
+      const { blogId, commentId } = req.params;
 
-    const [comment, extraComment, blog] = await Promise.all([
-      Comment.findOneAndDelete({ _id: commentId }),
-      Comment.findOne({ blog: blogId })
-        .sort({ createdAt: -1 })
-        .skip(commentsLimit), // 내장된 comment 중 하나가 삭제되었을 때를 대비해,
-      // 바로 다음 순서의 comment 불러오기
-      Blog.findOne({ _id: blogId }),
-    ]);
-    if (!comment) return res.status(400).send({ err: "comment is not exist." });
+      [deletedComment, blog] = await Promise.all([
+        Comment.findOneAndDelete({ _id: commentId }, { session }),
+        // 이때 여분의 댓글 함께 불러오지 않기, 삭제 전에 불려질지 후에 불려질지 모름
+        // (대부분 삭제 후에 불려지는 것 같음 (4번째 후기가 아닌 (앞쪽 삭제되는 경우) 5번째 후기 불려짐))
+        Blog.findOne({ _id: blogId }, {}, { session }),
+      ]);
 
-    blog.commentsCount--;
-    blog.comments = blog.comments.filter((blogComment) => {
-      return blogComment._id.toString() !== comment._id.toString();
+      if (!deletedComment)
+        return res.status(400).send({ err: "comment is not exist." });
+
+      blog.commentsCount--;
+      blog.comments = blog.comments.filter((blogComment) => {
+        return blogComment._id.toString() !== deletedComment._id.toString();
+      });
+      if (
+        blog.comments.length < commentsLimit &&
+        blog.commentsCount >= commentsLimit
+      ) {
+        // blog에 내장된 후기가 삭제되었고, 보여줄 수 있는 후기 더 있는 경우
+        const extraComment = await Comment.findOne(
+          { blog: blogId },
+          {},
+          { session }
+        )
+          .sort({ createdAt: -1 })
+          .skip(commentsLimit - 1); // 마지막 순서에 추가되어야 할 댓글 불러오기
+        blog.comments.push(extraComment);
+      }
+
+      await Blog.updateOne({ _id: blogId }, blog, { session });
     });
-    if (
-      blog.comments.length < commentsLimit &&
-      blog.commentsCount >= commentsLimit
-    ) {
-      // blog에 내장된 후기가 삭제되었고, 보여줄 수 있는 후기 더 있는 경우
-      blog.comments.push(extraComment);
-    }
 
-    await Blog.updateOne({ _id: blogId }, blog);
-    res.send({ success: true, comment, blog });
+    res.send({ success: true, comment: deletedComment });
   } catch (err) {
     return res.status(500).send({ err: err.message });
+  } finally {
+    await session.endSession();
   }
 });
 
