@@ -1,6 +1,6 @@
 const { Router } = require("express");
 const { Comment, Blog, User } = require("../models");
-const { isValidObjectId } = require("mongoose");
+const { isValidObjectId, startSession } = require("mongoose");
 
 const commentsLimit = 3;
 
@@ -13,6 +13,9 @@ const commentRouter = Router({ mergeParams: true });
 
 // 댓글 등록 API
 commentRouter.post("/", async (req, res) => {
+  const session = await startSession();
+  let comment;
+
   try {
     const { blogId } = req.params;
     if (!isValidObjectId(blogId))
@@ -24,48 +27,44 @@ commentRouter.post("/", async (req, res) => {
     if (typeof content !== "string")
       return res.status(400).send({ err: "content is required." });
 
-    // blog, user 호출을 동시에 하면 시간 줄일 수 있음
-    const [blog, user] = await Promise.all([
-      Blog.findById(blogId),
-      User.findById(userId),
-    ]);
+    await session.withTransaction(async () => {
+      // 트랜색션
+      const [blog, user] = await Promise.all([
+        Blog.findById(blogId, {}, { session }), // 세 번째 옵션에 넣어주어야 함
+        User.findById(userId, {}, { session }),
+      ]);
 
-    if (!blog || !user)
-      return res.status(400).send({ err: "blog or user does not exist." });
-    if (!blog.islive)
-      return res.status(400).send({ err: "blog is not available." });
+      if (!blog || !user)
+        return res.status(400).send({ err: "blog or user does not exist." });
+      if (!blog.islive)
+        return res.status(400).send({ err: "blog is not available." });
 
-    const comment = new Comment({
-      content,
-      user,
-      userFullName: `${user.name.first}${
-        user.name.last ? ` ${user.name.last}` : ""
-      }`,
-      // "err": "Maximum call stack size exceeded"
-      // 무한 루프, comment에 blog를 넣고 그 blog에 다시 comment 넣었기 때문 (서로 재참조)
-      blog: blogId, // blog 그대로 넣어주면 무한 루프 발생
+      comment = new Comment({
+        content,
+        user,
+        userFullName: `${user.name.first}${
+          user.name.last ? ` ${user.name.last}` : ""
+        }`,
+        blog: blogId,
+      });
+
+      blog.commentsCount++;
+      blog.comments.unshift(comment);
+      if (blog.commentsCount > commentsLimit) blog.comments.pop();
+
+      await Promise.all([
+        comment.save({ session }),
+        blog.save(), // session을 이용해서 불러온 문서에는 이미 session 내장되어 있음
+      ]);
     });
 
-    // blog에 comment 내장하도록 스키마 구조 수정됨, 댓글 생성 시 blog도 바꿔줘야 함
-    // await Promise.all([
-    //   comment.save(),
-    //   Blog.updateOne({ _id: blogId }, { $push: { comments: comment } }),
-    // ]);
-
-    blog.commentsCount++;
-    blog.comments.unshift(comment); // 최신 후기 맨 앞에 추가
-    // 맨 뒤의 가장 오래된 원소 제거
-    if (blog.commentsCount > commentsLimit) blog.comments.pop();
-
-    await Promise.all([
-      comment.save(),
-      blog.save(), // 저장할 문서의 가공 복잡할 경우
-      // Blog.updateOne({ _id: blogId }, { $inc: { commentsCount: 1 } }),
-    ]);
-
+    // await로 트랜색션 기다린 뒤 client로 결과 보내기
     res.send({ success: true, comment });
   } catch (err) {
+    console.log(err.message);
     return res.status(500).send({ err: err.message });
+  } finally {
+    await session.endSession();
   }
 });
 
