@@ -5,12 +5,12 @@ const mongoose = require("mongoose");
 const { userRouter, blogRouter } = require("./routes");
 // 테스트용 데이터 생성
 // const { generateFakeData } = require("../faker2");
-const port = 3000;
 
 const server = async () => {
   try {
-    const { MONGO_URL } = process.env;
+    const { MONGO_URL, PORT } = process.env;
     if (!MONGO_URL) throw new Error("MONGO_URL is required. ");
+    if (!PORT) throw new Error("PORT is required. ");
 
     // DB가 먼저 연결된 뒤 요청 받아야 함 (mongoose 연결 완료된 뒤 포트 수신 해야 함)
     await mongoose.connect(
@@ -32,8 +32,8 @@ const server = async () => {
     app.use("/users", userRouter);
     app.use("/blogs", blogRouter);
 
-    app.listen(port, async () => {
-      console.log(`server listening on port ${port}`);
+    app.listen(PORT, async () => {
+      console.log(`server listening on port ${PORT}`);
       // server의 API 사용하므로, 서버가 다 켜진 뒤 함수 실행해야 함
 
       // 유저 100명, 블로그 1000개, 후기 30000개 - 엄청 많은 호출을 병렬로 한 번에 하게 되면 오류 생김
